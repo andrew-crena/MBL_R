@@ -1,0 +1,277 @@
+---
+title: "MBL_RA_0"
+author: "Me"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+##1. UPLOADING LIBRARIES
+```{r setup, include=FALSE}
+#R has some basic function built into it that do not require downloading any additional libraries. This is what is commonly referred to as "base R". Since this is an open source programming language, new updates and functions/set of functions ar created all the time. To access these functions you need to first install the library package that contains the functions you would like to use. You can do this by either running "install.packages("the library name") or going to the bottom right window and selecting Packages > Install and searching for library package you need. Once you have the packages installed, you typically need to tell the script that you are wanting to use functions within the packages by running "library(package name)"
+
+#Below are a list of libraries I have found useful before
+
+library(tidyverse) #loads the following libraries - ggplot2, for data visualization. dplyr, for data manipulation. tidyr, for data tidying. readr, for data import. purrr, for functional programming. tibble, for tibbles, a modern re-imagining of data frames. stringr, for strings. forcats, for factors.
+library(ggplot2) #used many data visualization
+library(dplyr) #next iteration of plyr, uses flexible grammar of data manipulation, focused on data frames
+library(tidyr) #"tidy messy data"
+library(readr) # useful for reading and importing files into your environment
+library(gsheet) #useful for importing google sheets to r
+library(RMediation) #Mediation package
+library(stargazer) #Handy regression tables
+library(googlesheets4)#useful for importing from google drive
+```
+
+## SETTING AND NAVIGATING WORKING DIRECTORIES
+```{r, wd setup}
+# load necessary packages
+library(here)
+
+
+#tells you full file path of script in it current location
+here::i_am("MBL_RA_0.Rmd") 
+here() #returns file path of where the script is current saved
+setwd(here()) #sets the working directory to be wherever your source file or Rmd is
+
+#2
+#alternatively you can set your working dirctory using the following (change to wherever this script actually gets stored). For example, I will set the working directory to a locally stored folder in my PC called "MBL_R". You will need to learn how to copy a file as a path
+setwd("C:\\Users\\adcre\\Desktop_RStudio\\MBL_R")
+# let's check to see if it worked by getting our current working directory 
+getwd()
+
+#3
+#You can also do so by going up to the top bar when in your RStudio window and select Session > Set Working Directory > To Source File Location (or whenever you want it to be)
+```
+
+## IMPORTING CSV FILES (NOT FROM GOOGLE, FROM LOCAL)
+```{r, importing csv}
+# CSV files are commonly used for data exchange between different applications because they are simple, lightweight, and can be easily read and written by many programs. Google or Excel sheets are in this format at their core!
+# the "read_csv" function is part of the 'readr' package and is good for ease of use (not to be confused with read.csv, more basic function)
+# You will notice that there are a number of 'arguments' that these functions sometimes require, such as ", header=TRUE". This means your table has a header row (for naming columns) and the file should assign the top row of data to name the columns in your data frame. Another argument is ", na.strings=" which specifies the character strings that should be recognized as amissing value, such as 'NA' or 'N/A'. Another argument could be ", skip=3", which tells read_csv to skip the 3 top rows fo your data before importing. Essentially, arguments will read the file in the exact way you want dpending on the unique charcateristics of your data. Look into the other arguments that are avail in readr online! Always remember that there is generally many ways of doing the same thing, so use whatever method feels best while still achieving the same goal!
+
+
+# when using read_csv, you do not need to specify path if the file is in your current working directory
+
+#EXAMPLE WITH READ_CSV
+library(readr)
+setwd("C:\\Users\\adcre\\Desktop_RStudio\\MBL_R") # set the proper working directory (wd)
+getwd() # make sure you are in the right wd
+
+flight_data <- read_csv("Flight_data.csv",  na = c("", "NA", "N/A", "missing"))
+
+
+#for consistency reasons, we will stick to using the "flight_data" data frame in all practice problems moving forward, unless the solution to a problem requires a different type of data set.
+
+
+#EXAMPLE WITH READ.CSV (yes, they are different! read.csv is in base R, a little bit older and slower but still performs import)
+# no library() necessary because it is a base R function
+flight_data1 <- read.csv('Flight_data.csv')
+
+#Like many functions in R, read.csv has some "required" arguments, as well as several additional arguments that you can optionally add. At the minimum it is first going to expect a file name in quotes as the file it should be "reading in". It should be written EXACTLY what it looks like in the working directory it is in. This can also be a full pathway if the file is now in your working directory. Anything after this quoted file name are optional things you can add in if needed. Here you see header=T, this mean that we want R to recognize the first row are variables names, not data. sep="," means its a "comma separated file" which is the standard case for all CSVs. Log/Tab files are sep=" ". na.strings=c("NA", "888", "999")) means we want any of those quoted characters to be considered an "NA string" if it is found in the data. You can change these quoted characters to anything that is relevant to your data set. Like if a "10" for example is often designating missing data, it may be useful to change that to an NA since reading this data in. 
+```
+
+
+## USING GSHEET PACKAGE TO IMPORT GOOGLE SHEET AS CSV
+```{r, importing gsheet csv}
+
+# load necessary package(s). Also, make sure to perform google auth to give access to your files
+library(googlesheets4)
+library(gsheet)
+# to authenticate, use "gs4_auth()" function
+
+# use the url of the google sheet of interest. It is important to  know the access/permissions of the google sheet before you do this. 
+
+# assign the url to a simple name
+sheet_url <- "https://docs.google.com/spreadsheets/d/1ZGyZTS6VQb219UZvsycoMIE2ga90Y-IMvNEom5KRKsI/edit?gid=1321814255#gid=1321814255"
+
+# we are using the gsheet2tbl() function to pull the sheet in as a data table. Remember to assign a 
+# name to your new variable so it will be displayed in your environment (top right)
+data <- gsheet2tbl(sheet_url)
+
+```
+
+
+## VIEWING YOUR DATA
+# Now that we have your data loaded into rstudio, it is important to view it. While it could be useful to view it in the source window (top left window), it does not tell us much about the structure or composition of the data set. We will cover some useful functions to learn the various characteristics of the data, as this can range from very simple to very complex
+```{r, viewing your data}
+# remember to use the same data set when practicing basic functions like this in order to gather a more consistent perspective on the tasks that you are performing
+
+# str()
+# we will start with the str() function, which will immediately return a brief summary of the structure of your data, including the types of data in each column, first few entries, and some other dimensions
+str(flight_data)
+
+# head()
+# # this function will show you the top 6 rows of your data frame
+head(flight_data)
+
+# tail()
+# shows the LAST 6 rows
+tail(flight_data)
+
+# summary()
+# this function gives basic descriptive stats on your data frame for each column (min, max, median, mean, etc)
+summary(flight_data)
+
+# glimpse()
+# this function is part of the dplyr package, and functions similarly to str(), but some prefer this function over others because of how simple and clean the display is
+library(dplyr)
+glimpse(flight_data)
+```
+
+# REFORMATTING, RECODING, RENAMING
+```{r, REFORMATTING, RECODING, RENAMING}
+
+# The most common form of data is factors, numbers, strings and characters. They are all understood by R in different ways and certain functions need data to be in specific types to be understood correctly. Below are examples of rewriting the variable "ID" as a factor. And also creating a new variables Age as the numeric version of "Age.at.V1". 
+# To call a variable within a data set you say [name of dataset]$[name of varible], if the name of the variable does not exist, it will CREATE the variable in that data set. So in this case, "Age" did not exist, it was just Age.at.V1 and Age.at.V2 in our sheet, so instead we created a number version of "Age.at.V1" now called "Age"
+DATA$ID<- as.factor(DATA$ID)
+DATA$Age<- as.numeric(DATA$Age_at_Bx)
+
+# recode() 
+# #Here is how you can easily recode something using the "recode" function, the first value will be what the data currently is, and the second value is what you now want it to be. For example, we want to round up all of the scores in one column or variable, 'Puberty_rounded'.
+DATA$Puberty_rounded <- recode(DATA$Puberty, '1.5' = 2.0, '2.5' = 3.0, '3.5' = 4.0, 
+                               '4.5' = 5.0)
+
+# rename()
+# If you wanted to rename variables or names of columns, you can change them with 
+# rename(), even doing multiple rows simultaneously
+DATA_Final<- rename(DATA,"Hx_Attempt" = "Hx.Attempt", "Age_First.Attempt" = "Age.First.Attempt","Number_of_Attempts" = "Number.of.Attempts")
+
+# attach() and detach() 
+# If you have several variables you are manipulating and don't want to call the data frame they belong to each time, you can use attach() and detach() to tell the software to call only to the data frame you specify. This prevents you from having to type out the long code that calls to a specific column nested in a data set
+attach(DATA)
+DATA$RADS_total_rescore<- RADS_DM + RADS_AN + RADS_NS + RADS_SC
+detach(DATA)
+
+```
+
+## MERGING, SUBSETTING
+# the data is from an old Rmd file, so it will not be consistent with the flight data that we ahvebeen using. However, the functions should all work similarly
+```{r, merging and subsetting}
+# here are some useful ways of subsetting data to a smaller data frame, which is very useful for cleaning and further analyses
+
+# subset() which has three arguments: subset(data, subset, select)
+# 'data' calls to the desired frame, 'subset' is a logical argument specifying which rows (elements) to keep, 'select' indicates which columns to keep you can concatenate
+flight_data1 <- subset(flight_data, Airline == "Jet Airways", select = c(Airline, Price, Month, Dep_hours))
+View(flight_data1)
+
+# brackets, '[x, y]' also 3 arguments, but first two are row and column specification, respectively. 3rd argument is drop =, which can also be left alone to default
+flight_data2 <- flight_data[flight_data$Airline == "Jet Airways", c("Airline", "Price", "Month", "Dep_hours")]
+View(flight_data2)
+
+# filter() is a great function part of dplyr that could be very versatile. In the following example i am using a pipeline operator, '%>%'. This will allow me to chain functions together, such as using select() to specify the columns I would like
+flight_data3 <- filter(flight_data, Airline == "Jet Airways") %>%
+   select(Airline, Price, Month, Dep_hours)
+
+# all three of the functions used above should give you similar or identical data frames. This demonstrates that there are many ways of solving the same problem!
+```
+
+############### VISUALIZATIONS!
+
+# i will be using a housing price data set first, found on Kaggle
+```{r, bar plot}
+
+# first, i will download the data set as it is saved on my working directory
+library(readr)
+housing_data <- read_csv("Housing_Price_Data.csv")
+
+# this is a great data set, but it does not have an ID column. I will add one using mutate(). While this may not be directly applicable to housing, this is a powerful function
+
+library(dplyr)
+housing_data <- housing_data %>%
+  mutate(ID = row_number())
+
+## I actually realized I didnt like the data because it did not have the year built. I will use a different one
+housing <- read_csv("Housing.csv")
+
+# the df actually contains a column with the house's age in years, but I want it to be the year. Lets use mutate() again!
+current_year <- 2024
+housing$year_built <- current_year - housing$housing_median_age
+
+# lets say I want to observe the correlation between house size and price over a long time span, more than 20 years
+
+# calculate average price by year. We will need this in order to build our plot
+housing_summary <- housing %>%
+  group_by(year_built) %>%
+  summarize(
+    AveragePrice = mean(median_house_value))
+
+# now we will use ggplot2! part of tidyverse
+library(ggplot2)
+
+ggplot(housing_summary, aes(x = year_built, y = AveragePrice)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Change in Housing Price Over Time",
+       x = "year Built",
+       y = "Average House Price") + 
+  theme_minimal()
+
+
+```
+
+## TIME SERIES PLOT
+```{r, TIME SERIES PLOT}
+
+library(readr)
+setwd("C:\\Users\\acrena\\Documents\\mbl_data")
+getwd()
+google_stock <- read_csv("alphabet_stockprice.csv")
+str(google_stock)
+
+```
+
+
+## LINEAR MODELS
+```{r, linear regression models}
+
+# using an education data set, all us states with a handful of variables
+edu_data <- read_csv("states_all.csv")
+print(edu_data)
+
+# I want to see what years are in the data set 
+unique_years <- unique(edu_data$YEAR)
+print(unique_years)
+
+# I am going to pick a random 10-year span to observe
+start_year <- 2000
+end_year <- 2010
+edu_data1 <- subset(edu_data, YEAR >= 2000 & YEAR <= 2010)
+print(edu_data1)
+
+# i will rename some columns for simplicity using rename()
+edu_data1 <- edu_data1 %>%
+   rename(total_rev = TOTAL_REVENUE, 
+          math_score = AVG_MATH_8_SCORE,
+          read_score = AVG_READING_8_SCORE)
+
+# need to remove nas using is.na() and the '!'
+clean_edu <- edu_data1 %>%
+   filter(!is.na(total_rev) & !is.na(math_score))
+
+
+# now lets do the linear model
+edu_model <- lm(math_score ~ total_rev, data = clean_edu)
+summary(edu_model)
+
+# different predictor variable
+edu_model1 <- lm(math_score ~ TOTAL_EXPENDITURE, data = clean_edu)
+summary(edu_model1)
+
+# now lets build a plot for funsies
+plot(clean_edu$total_rev, clean_edu$math_score,
+     xlab = "Total Revenue",
+     ylab = "Math Score",
+     main = "Relationship between Revenue and Math Scores")
+# add regression line based on coefficients
+abline(edu_model1, col = "blue")
+
+```
+
